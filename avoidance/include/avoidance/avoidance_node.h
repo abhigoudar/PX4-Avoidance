@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "avoidance/common.h"
+#include <tf2/convert.h>
 #include <px4_msgs/msg/telemetry_status.hpp>
 
 #include <chrono>

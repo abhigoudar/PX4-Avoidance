@@ -24,6 +24,9 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 if(DISABLE_SIMULATION)
   message(STATUS "Building avoidance without Gazebo Simulation")
@@ -64,7 +67,7 @@ endif()
 
 # Add avoidance lib
 add_library(avoidance SHARED "${AVOIDANCE_CPP_FILES}")
-ament_target_dependencies(avoidance Eigen3 px4_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS})
+ament_target_dependencies(avoidance px4_msgs tf2 ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_include_directories(avoidance PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
@@ -74,16 +77,14 @@ target_include_directories(avoidance PUBLIC
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
   avoidance
-  Eigen3::Eigen
   ${YAML_CPP_LIBRARIES}
 )
 
 # Add node dependencies
-ament_target_dependencies(avoidance px4_msgs rclcpp Eigen3::Eigen)
+ament_target_dependencies(avoidance px4_msgs rclcpp visualization_msgs tf2 tf2_ros)
 
 # Export information to downstream packages
-ament_export_dependencies(ament_cmake rclcpp rosidl_default_runtime eigen3_cmake_module Eigen3 px4_msgs geometry_msgs sensor_msgs std_msgs)
-ament_export_interfaces(export_avoidance HAS_LIBRARY_TARGET)
+ament_export_dependencies(ament_cmake rclcpp rosidl_default_runtime eigen3_cmake_module Eigen3 px4_msgs geometry_msgs sensor_msgs std_msgs tf2 visualization_msgs)
 ament_export_include_directories(include)
 ament_export_libraries(avoidance)
 

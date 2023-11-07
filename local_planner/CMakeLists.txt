@@ -9,10 +9,6 @@ find_package(ament_cmake REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(perception_pcl REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(tf2 REQUIRED)
-
-get_default_rmw_implementation(rmw_implementation)
-find_package("${rmw_implementation}" REQUIRED)
 
 find_package(avoidance REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -24,8 +20,12 @@ find_package(std_msgs REQUIRED)
 find_package(PythonInterp REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(yaml_cpp_vendor REQUIRED)
+find_package(pcl_ros REQUIRED)
 find_package(PCL REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 if(DISABLE_SIMULATION)
   message(STATUS "Building avoidance without Gazebo Simulation")
@@ -52,12 +52,10 @@ include_directories(
 
 ## Declare a C++ library
 set(LOCAL_PLANNER_CPP_FILES
-  #"src/nodes/local_planner.cpp"
   "src/nodes/waypoint_generator.cpp"
   "src/nodes/tree_node.cpp"
   "src/nodes/star_planner.cpp"
   "src/nodes/planner_functions.cpp"
-  #"src/nodes/local_planner_visualization.cpp"
   "src/utils/trajectory_simulator.cpp"
 )
 
@@ -69,30 +67,35 @@ target_include_directories(local_planner PUBLIC
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
   ${Eigen3_INCLUDE_DIRS}
 )
-target_link_libraries(local_planner Eigen3::Eigen)
 
 ## Declare a C++ executable
 add_executable(local_planner_node
   src/nodes/local_planner_node_main.cpp
+  src/nodes/local_planner.cpp
+  src/nodes/local_planner_visualization.cpp
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(
-  local_planner_node
-  local_planner
-  avoidance
-  ${YAML_CPP_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
+target_link_libraries(local_planner_node local_planner)
 # Add node dependencies
-ament_target_dependencies(local_planner_node local_planner px4_msgs rclcpp avoidance)
+ament_target_dependencies(local_planner_node px4_msgs rclcpp avoidance pcl_ros)
 
 # Export information to downstream packages
-ament_export_dependencies(ament_cmake local_planner rclcpp rosidl_default_runtime eigen3_cmake_module Eigen3 px4_msgs geometry_msgs sensor_msgs std_msgs)
-ament_export_interfaces(export_local_planner HAS_LIBRARY_TARGET)
+ament_export_dependencies(local_planner 
+  rclcpp 
+  eigen3_cmake_module 
+  px4_msgs 
+  geometry_msgs 
+  sensor_msgs
+  pcl_ros
+  std_msgs
+  tf2
+  tf2_ros
+  visualization_msgs
+)
+
 ament_export_include_directories(include ${px4_msgs_INCLUDE_DIRS})
-ament_export_libraries()
+ament_export_libraries(local_planner)
 
 #############
 ## Install ##
@@ -104,9 +107,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 # Install artifacts
-install(DIRECTORY cmake
-        DESTINATION share/${PROJECT_NAME}
-)
+# install(DIRECTORY cmake
+#         DESTINATION share/${PROJECT_NAME}
+# )
 install(TARGETS local_planner
         EXPORT export_local_planner
         ARCHIVE DESTINATION lib

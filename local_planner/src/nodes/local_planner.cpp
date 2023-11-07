@@ -4,11 +4,18 @@
 #include "local_planner/star_planner.h"
 #include "local_planner/tree_node.h"
 
-#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/image_encodings.hpp>
 
 namespace avoidance {
 
-LocalPlanner::LocalPlanner() : star_planner_(new StarPlanner()) {}
+LocalPlanner::LocalPlanner() : star_planner_(new StarPlanner()) 
+{
+  ros_node_ = std::make_shared<rclcpp::Node>("local_planner",
+    rclcpp::NodeOptions());
+  // TODO: create executtor and run
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_node(ros_node_);
+}
 
 LocalPlanner::~LocalPlanner() {}
 
@@ -22,40 +29,43 @@ void LocalPlanner::setState(const Eigen::Vector3f& pos, const Eigen::Vector3f& v
 }
 
 // set parameters changed by dynamic rconfigure
-void LocalPlanner::dynamicReconfigureSetParams(avoidance::LocalPlannerNodeConfig& config, uint32_t level) {
-  max_sensor_range_ = static_cast<float>(config.max_sensor_range_);
-  cost_params_.pitch_cost_param = config.pitch_cost_param_;
-  cost_params_.yaw_cost_param = config.yaw_cost_param_;
-  cost_params_.velocity_cost_param = config.velocity_cost_param_;
-  cost_params_.obstacle_cost_param = config.obstacle_cost_param_;
-  max_point_age_s_ = static_cast<float>(config.max_point_age_s_);
-  min_num_points_per_cell_ = config.min_num_points_per_cell_;
-  min_sensor_range_ = static_cast<float>(config.min_sensor_range_);
-  timeout_startup_ = config.timeout_startup_;
-  timeout_critical_ = config.timeout_critical_;
-  timeout_termination_ = config.timeout_termination_;
-  children_per_node_ = config.children_per_node_;
-  n_expanded_nodes_ = config.n_expanded_nodes_;
-  smoothing_margin_degrees_ = static_cast<float>(config.smoothing_margin_degrees_);
+// void LocalPlanner::dynamicReconfigureSetParams(avoidance::LocalPlannerNodeConfig& config, uint32_t level) {
+//   max_sensor_range_ = static_cast<float>(config.max_sensor_range_);
+//   cost_params_.pitch_cost_param = config.pitch_cost_param_;
+//   cost_params_.yaw_cost_param = config.yaw_cost_param_;
+//   cost_params_.velocity_cost_param = config.velocity_cost_param_;
+//   cost_params_.obstacle_cost_param = config.obstacle_cost_param_;
+//   max_point_age_s_ = static_cast<float>(config.max_point_age_s_);
+//   min_num_points_per_cell_ = config.min_num_points_per_cell_;
+//   min_sensor_range_ = static_cast<float>(config.min_sensor_range_);
+//   timeout_startup_ = config.timeout_startup_;
+//   timeout_critical_ = config.timeout_critical_;
+//   timeout_termination_ = config.timeout_termination_;
+//   children_per_node_ = config.children_per_node_;
+//   n_expanded_nodes_ = config.n_expanded_nodes_;
+//   smoothing_margin_degrees_ = static_cast<float>(config.smoothing_margin_degrees_);
 
-  if (getGoal().z() != config.goal_z_param) {
-    auto goal = getGoal();
-    goal.z() = config.goal_z_param;
-    setGoal(goal);
-  }
+//   if (getGoal().z() != config.goal_z_param) {
+//     auto goal = getGoal();
+//     goal.z() = config.goal_z_param;
+//     setGoal(goal);
+//   }
 
-  star_planner_->dynamicReconfigureSetStarParams(config, level);
+//   star_planner_->dynamicReconfigureSetStarParams(config, level);
 
-  ROS_DEBUG("\033[0;35m[OA] Dynamic reconfigure call \033[0m");
-}
+//   ROS_DEBUG("\033[0;35m[OA] Dynamic reconfigure call \033[0m");
+// }
 
 void LocalPlanner::setGoal(const Eigen::Vector3f& goal) {
   goal_ = goal;
 
-  ROS_INFO("===== Set Goal ======: [%f, %f, %f].", goal_.x(), goal_.y(), goal_.z());
+  RCLCPP_INFO(ros_node_->get_logger(), "===== Set Goal ======: [%f, %f, %f].", goal_.x(), goal_.y(), goal_.z());
   applyGoal();
 }
-void LocalPlanner::setPreviousGoal(const Eigen::Vector3f& prev_goal) { prev_goal_ = prev_goal; }
+
+void LocalPlanner::setPreviousGoal(const Eigen::Vector3f& prev_goal) { 
+  prev_goal_ = prev_goal; 
+}
 
 void LocalPlanner::setFOV(int i, const FOV& fov) {
   if (i < fov_fcu_frame_.size()) {
@@ -65,19 +75,24 @@ void LocalPlanner::setFOV(int i, const FOV& fov) {
   }
 }
 
-Eigen::Vector3f LocalPlanner::getGoal() const { return goal_; }
+Eigen::Vector3f LocalPlanner::getGoal() const { 
+  return goal_; 
+}
 
-void LocalPlanner::applyGoal() { star_planner_->setGoal(goal_); }
+void LocalPlanner::applyGoal(){ 
+  star_planner_->setGoal(goal_);
+}
 
 void LocalPlanner::runPlanner() {
-  ROS_INFO("\033[1;35m[OA] Planning started, using %i cameras\n \033[0m",
+  RCLCPP_INFO(ros_node_->get_logger(), "\033[1;35m[OA] Planning started, using %i cameras\n \033[0m",
            static_cast<int>(original_cloud_vector_.size()));
 
-  float elapsed_since_last_processing = static_cast<float>((ros::Time::now() - last_pointcloud_process_time_).toSec());
+  rclcpp::Time now_ = ros_node_->get_clock()->now();
+  float elapsed_since_last_processing = static_cast<float>((now_.seconds() - last_pointcloud_process_time_.seconds()));
   processPointcloud(final_cloud_, original_cloud_vector_, fov_fcu_frame_, yaw_fcu_frame_deg_, pitch_fcu_frame_deg_,
                     position_, min_sensor_range_, max_sensor_range_, max_point_age_s_, elapsed_since_last_processing,
                     min_num_points_per_cell_);
-  last_pointcloud_process_time_ = ros::Time::now();
+  last_pointcloud_process_time_ = now_;
 
   determineStrategy();
 }
@@ -143,13 +158,13 @@ void LocalPlanner::determineStrategy() {
 
     // build search tree
     star_planner_->buildLookAheadTree();
-    last_path_time_ = ros::Time::now();
+    last_path_time_ = ros_node_->get_clock()->now();
   }
 }
 
 void LocalPlanner::updateObstacleDistanceMsg(Histogram hist) {
-  sensor_msgs::LaserScan msg = {};
-  msg.header.stamp = ros::Time::now();
+  sensor_msgs::msg::LaserScan msg = {};
+  msg.header.stamp = ros_node_->get_clock()->now();
   msg.header.frame_id = "local_origin";
   msg.angle_increment = static_cast<double>(ALPHA_RES) * M_PI / 180.0;
   msg.range_min = min_sensor_range_;
@@ -173,8 +188,8 @@ void LocalPlanner::updateObstacleDistanceMsg(Histogram hist) {
 }
 
 void LocalPlanner::updateObstacleDistanceMsg() {
-  sensor_msgs::LaserScan msg = {};
-  msg.header.stamp = ros::Time::now();
+  sensor_msgs::msg::LaserScan msg = {};
+  msg.header.stamp = ros_node_->get_clock()->now();
   msg.header.frame_id = "local_origin";
   msg.angle_increment = static_cast<double>(ALPHA_RES) * M_PI / 180.0;
   msg.range_min = min_sensor_range_;
@@ -183,23 +198,28 @@ void LocalPlanner::updateObstacleDistanceMsg() {
   distance_data_ = msg;
 }
 
-Eigen::Vector3f LocalPlanner::getPosition() const { return position_; }
+Eigen::Vector3f LocalPlanner::getPosition() const {
+  return position_;
+}
 
-const pcl::PointCloud<pcl::PointXYZI>& LocalPlanner::getPointcloud() const { return final_cloud_; }
+const pcl::PointCloud<pcl::PointXYZI>& LocalPlanner::getPointcloud() const { 
+  return final_cloud_;
+}
 
 void LocalPlanner::setDefaultPx4Parameters() {
-  px4_.param_mpc_auto_mode = 1;
-  px4_.param_mpc_jerk_min = 8.f;
-  px4_.param_mpc_jerk_max = 20.f;
-  px4_.param_acc_up_max = 10.f;
-  px4_.param_mpc_z_vel_max_up = 3.f;
-  px4_.param_mpc_acc_down_max = 10.f;
-  px4_.param_mpc_vel_max_dn = 1.f;
-  px4_.param_mpc_acc_hor = 5.f;
-  px4_.param_mpc_xy_cruise = 3.f;
-  px4_.param_mpc_tko_speed = 1.f;
-  px4_.param_mpc_land_speed = 0.7f;
-  px4_.param_cp_dist = 4.f;
+  assert(false && "local_planner.cpp setDefaultPx4Parameters");
+  // px4_.param_mpc_auto_mode = 1;
+  // px4_.param_mpc_jerk_min = 8.f;
+  // px4_.param_mpc_jerk_max = 20.f;
+  // px4_.param_acc_up_max = 10.f;
+  // px4_.param_mpc_z_vel_max_up = 3.f;
+  // px4_.param_mpc_acc_down_max = 10.f;
+  // px4_.param_mpc_vel_max_dn = 1.f;
+  // px4_.param_mpc_acc_hor = 5.f;
+  // px4_.param_mpc_xy_cruise = 3.f;
+  // px4_.param_mpc_tko_speed = 1.f;
+  // px4_.param_mpc_land_speed = 0.7f;
+  // px4_.param_cp_dist = 4.f;
 }
 
 void LocalPlanner::getTree(std::vector<TreeNode>& tree, std::vector<int>& closed_set,
@@ -209,7 +229,7 @@ void LocalPlanner::getTree(std::vector<TreeNode>& tree, std::vector<int>& closed
   path_node_positions = star_planner_->path_node_positions_;
 }
 
-void LocalPlanner::getObstacleDistanceData(sensor_msgs::LaserScan& obstacle_distance) {
+void LocalPlanner::getObstacleDistanceData(sensor_msgs::msg::LaserScan& obstacle_distance) {
   obstacle_distance = distance_data_;
 }
 

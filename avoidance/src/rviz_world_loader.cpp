@@ -149,9 +149,9 @@ int WorldVisualizer::visualizeDrone(const px4_msgs::msg::VehicleOdometry& pose) 
   drone.scale.y = 1.5;
   drone.scale.z = 1.5;
   //TODO: apply frame transforms?
-  drone.pose.position.x = pose.x;
-  drone.pose.position.y = pose.y;
-  drone.pose.position.z = pose.z;
+  drone.pose.position.x = pose.position[0];
+  drone.pose.position.y = pose.position[1];
+  drone.pose.position.z = pose.position[2];
   drone.pose.orientation.x = pose.q[3];
   drone.pose.orientation.y = pose.q[0];
   drone.pose.orientation.z = pose.q[1];
