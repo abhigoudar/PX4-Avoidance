@@ -130,36 +130,37 @@ void LocalPlanner::generateHistogramImage(Histogram& histogram) {
 
 void LocalPlanner::determineStrategy() {
   // clear cost image
-  cost_image_data_.clear();
-  cost_image_data_.resize(3 * GRID_LENGTH_E * GRID_LENGTH_Z, 0);
+  assert(false && "local_planner determineStrategy");
+  // cost_image_data_.clear();
+  // cost_image_data_.resize(3 * GRID_LENGTH_E * GRID_LENGTH_Z, 0);
 
-  create2DObstacleRepresentation(px4_.param_cp_dist > 0.f);
+  // create2DObstacleRepresentation(px4_.param_cp_dist > 0.f);
 
-  // calculate the vehicle projected position on the line between the previous and current goal
-  Eigen::Vector2f u_prev_to_goal = (goal_ - prev_goal_).head<2>().normalized();
-  Eigen::Vector2f prev_to_pos = (position_ - prev_goal_).head<2>();
-  closest_pt_.head<2>() = prev_goal_.head<2>() + (u_prev_to_goal * u_prev_to_goal.dot(prev_to_pos));
-  closest_pt_.z() = goal_.z();
+  // // calculate the vehicle projected position on the line between the previous and current goal
+  // Eigen::Vector2f u_prev_to_goal = (goal_ - prev_goal_).head<2>().normalized();
+  // Eigen::Vector2f prev_to_pos = (position_ - prev_goal_).head<2>();
+  // closest_pt_.head<2>() = prev_goal_.head<2>() + (u_prev_to_goal * u_prev_to_goal.dot(prev_to_pos));
+  // closest_pt_.z() = goal_.z();
 
-  // if the vehicle is less than the cruise speed away from the line or if prev goal is the same as goal,
-  // set the projection point to the goal such that the cost function doesn't pull the vehicle towards the line
-  if ((position_ - closest_pt_).head<2>().norm() < px4_.param_mpc_xy_cruise ||
-      (goal_ - prev_goal_).head<2>().norm() < 0.001f) {
-    closest_pt_ = goal_;
-  }
+  // // if the vehicle is less than the cruise speed away from the line or if prev goal is the same as goal,
+  // // set the projection point to the goal such that the cost function doesn't pull the vehicle towards the line
+  // if ((position_ - closest_pt_).head<2>().norm() < px4_.param_mpc_xy_cruise ||
+  //     (goal_ - prev_goal_).head<2>().norm() < 0.001f) {
+  //   closest_pt_ = goal_;
+  // }
 
-  if (!polar_histogram_.isEmpty()) {
-    getCostMatrix(polar_histogram_, goal_, position_, velocity_, cost_params_, smoothing_margin_degrees_, closest_pt_,
-                  max_sensor_range_, min_sensor_range_, cost_matrix_, cost_image_data_);
+  // if (!polar_histogram_.isEmpty()) {
+  //   getCostMatrix(polar_histogram_, goal_, position_, velocity_, cost_params_, smoothing_margin_degrees_, closest_pt_,
+  //                 max_sensor_range_, min_sensor_range_, cost_matrix_, cost_image_data_);
 
-    star_planner_->setParams(cost_params_);
-    star_planner_->setPointcloud(final_cloud_);
-    star_planner_->setClosestPointOnLine(closest_pt_);
+  //   star_planner_->setParams(cost_params_);
+  //   star_planner_->setPointcloud(final_cloud_);
+  //   star_planner_->setClosestPointOnLine(closest_pt_);
 
-    // build search tree
-    star_planner_->buildLookAheadTree();
-    last_path_time_ = ros_node_->get_clock()->now();
-  }
+  //   // build search tree
+  //   star_planner_->buildLookAheadTree();
+  //   last_path_time_ = ros_node_->get_clock()->now();
+  // }
 }
 
 void LocalPlanner::updateObstacleDistanceMsg(Histogram hist) {
@@ -235,25 +236,26 @@ void LocalPlanner::getObstacleDistanceData(sensor_msgs::msg::LaserScan& obstacle
 
 avoidanceOutput LocalPlanner::getAvoidanceOutput() const {
   avoidanceOutput out;
-
+  assert(false && " local_planner getAvoidanceOutput");
   // calculate maximum speed given the sensor range and vehicle parameters
   // quadratic solve of 0 = u^2 + 2as, with s = u * |a/j| + r
   // u = initial velocity, a = max acceleration
   // s = stopping distance under constant acceleration
   // j = maximum jerk, r = maximum range sensor distance
-  float accel_ramp_time = px4_.param_mpc_acc_hor / px4_.param_mpc_jerk_max;
-  float a = 1;
-  float b = 2 * px4_.param_mpc_acc_hor * accel_ramp_time;
-  float c = 2 * -px4_.param_mpc_acc_hor * max_sensor_range_;
-  float limited_speed = (-b + std::sqrt(b * b - 4 * a * c)) / (2 * a);
 
-  float speed = std::isfinite(mission_item_speed_) ? mission_item_speed_ : px4_.param_mpc_xy_cruise;
-  float max_speed = std::min(speed, limited_speed);
+  // float accel_ramp_time = px4_.param_mpc_acc_hor / px4_.param_mpc_jerk_max;
+  // float a = 1;
+  // float b = 2 * px4_.param_mpc_acc_hor * accel_ramp_time;
+  // float c = 2 * -px4_.param_mpc_acc_hor * max_sensor_range_;
+  // float limited_speed = (-b + std::sqrt(b * b - 4 * a * c)) / (2 * a);
 
-  out.cruise_velocity = max_speed;
-  out.last_path_time = last_path_time_;
+  // float speed = std::isfinite(mission_item_speed_) ? mission_item_speed_ : px4_.param_mpc_xy_cruise;
+  // float max_speed = std::min(speed, limited_speed);
 
-  out.path_node_positions = star_planner_->path_node_positions_;
+  // out.cruise_velocity = max_speed;
+  // out.last_path_time = last_path_time_;
+
+  // out.path_node_positions = star_planner_->path_node_positions_;
   return out;
 }
 }

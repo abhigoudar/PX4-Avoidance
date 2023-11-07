@@ -2,10 +2,7 @@
 #define AVOIDANCE_AVOIDANCE_NODE_H
 
 #include <rclcpp/rclcpp.hpp>
-
 #include "avoidance/common.h"
-#include <tf2/convert.h>
-#include <px4_msgs/msg/telemetry_status.hpp>
 
 #include <chrono>
 
@@ -37,7 +34,7 @@ class AvoidanceNode {
 
  private:
   // telemetry_status Publisher
-  rclcpp::Publisher<px4_msgs::msg::TelemetryStatus>::SharedPtr telemetry_status_pub_;
+  // rclcpp::Publisher<px4_msgs::msg::TelemetryStatus>::SharedPtr telemetry_status_pub_;
 
   rclcpp::executors::MultiThreadedExecutor cmdloop_executor_;
   rclcpp::executors::MultiThreadedExecutor statusloop_executor_;
@@ -48,7 +45,7 @@ class AvoidanceNode {
   MAV_STATE companion_state_ = MAV_STATE::MAV_STATE_STANDBY;
 
   // PX4 Firmware parameters
-  ModelParameters px4_;
+  // ModelParameters px4_;
 
   std::chrono::milliseconds cmdloop_dt_;
   std::chrono::milliseconds statusloop_dt_;

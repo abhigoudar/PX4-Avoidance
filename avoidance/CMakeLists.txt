@@ -6,34 +6,43 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(builtin_interfaces REQUIRED)
-find_package(perception_pcl REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(tf2 REQUIRED)
 
-get_default_rmw_implementation(rmw_implementation)
-find_package("${rmw_implementation}" REQUIRED)
-
-find_package(geometry_msgs REQUIRED)
-find_package(px4_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
+find_package(visualization_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(perception_pcl REQUIRED)
 
 find_package(PythonInterp REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL REQUIRED)
-find_package(visualization_msgs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
+
+
+set(DEPENDENCIES
+  rclcpp
+  builtin_interfaces
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  visualization_msgs
+  tf2
+  tf2_ros
+  perception_pcl
+  yaml_cpp_vendor
+)
 
 if(DISABLE_SIMULATION)
   message(STATUS "Building avoidance without Gazebo Simulation")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_SIMULATION")
 else()
   message(STATUS "Building avoidance with Gazebo Simulation")
-  find_package(yaml-cpp REQUIRED)
 endif(DISABLE_SIMULATION)
 
 #################
@@ -51,7 +60,6 @@ include_directories(
   include
   ${rclcpp_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -67,24 +75,15 @@ endif()
 
 # Add avoidance lib
 add_library(avoidance SHARED "${AVOIDANCE_CPP_FILES}")
-ament_target_dependencies(avoidance px4_msgs tf2 ${${PROJECT_NAME}_EXPORTED_TARGETS})
+ament_target_dependencies(avoidance ${DEPENDENCIES})
 target_include_directories(avoidance PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
   ${Eigen3_INCLUDE_DIRS}
 )
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(
-  avoidance
-  ${YAML_CPP_LIBRARIES}
-)
-
-# Add node dependencies
-ament_target_dependencies(avoidance px4_msgs rclcpp visualization_msgs tf2 tf2_ros)
-
 # Export information to downstream packages
-ament_export_dependencies(ament_cmake rclcpp rosidl_default_runtime eigen3_cmake_module Eigen3 px4_msgs geometry_msgs sensor_msgs std_msgs tf2 visualization_msgs)
+ament_export_dependencies(eigen3_cmake_module ${DEPENDENCIES})
 ament_export_include_directories(include)
 ament_export_libraries(avoidance)
 

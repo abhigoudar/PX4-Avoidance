@@ -9,8 +9,8 @@ WorldVisualizer::WorldVisualizer()
     : Node("world_visualizer"),
       world_path_(this->declare_parameter("world_path", ""))
 {
-  pose_sub_ = this->create_subscription<px4_msgs::msg::VehicleOdometry>(
-      "VehicleOdometry_PubSubTopic", 1, std::bind(&WorldVisualizer::positionCallback, this, _1));
+  // pose_sub_ = this->create_subscription<px4_msgs::msg::VehicleOdometry>(
+  //     "VehicleOdometry_PubSubTopic", 1, std::bind(&WorldVisualizer::positionCallback, this, _1));
 
   world_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/world", 1);
   drone_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/drone", 1);
@@ -26,14 +26,14 @@ void WorldVisualizer::loopCallback() {
   }
 }
 
-void WorldVisualizer::positionCallback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg) const {
-  // visualize drone in RVIZ
-  if (!world_path_.empty()) {
-    if (visualizeDrone(*msg)) {
-      RCLCPP_WARN(this->get_logger(), "Failed to visualize drone in RViz");
-    }
-  }
-}
+// void WorldVisualizer::positionCallback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg) const {
+//   // visualize drone in RVIZ
+//   if (!world_path_.empty()) {
+//     if (visualizeDrone(*msg)) {
+//       RCLCPP_WARN(this->get_logger(), "Failed to visualize drone in RViz");
+//     }
+//   }
+// }
 
 int WorldVisualizer::resolveUri(std::string& uri) const {
   // Iterate through all locations in GAZEBO_MODEL_PATH
@@ -132,38 +132,38 @@ int WorldVisualizer::visualizeRVIZWorld(const std::string& world_path) {
   return 0;
 }
 
-int WorldVisualizer::visualizeDrone(const px4_msgs::msg::VehicleOdometry& pose) const {
-  auto drone = visualization_msgs::msg::Marker();
-  drone.header.frame_id = "local_origin";
-  drone.header.stamp = rclcpp::Clock().now();
-  drone.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-  drone.mesh_resource = "model://matrice_100/meshes/Matrice_100.dae";
-  if (drone.mesh_resource.find("model://") != std::string::npos) {
-    if (resolveUri(drone.mesh_resource)) {
-      RCLCPP_ERROR(this->get_logger(), "RVIZ world loader could not find drone model");
-      return 1;
-    }
-  }
-  drone.mesh_use_embedded_materials = true;
-  drone.scale.x = 1.5;
-  drone.scale.y = 1.5;
-  drone.scale.z = 1.5;
-  //TODO: apply frame transforms?
-  drone.pose.position.x = pose.position[0];
-  drone.pose.position.y = pose.position[1];
-  drone.pose.position.z = pose.position[2];
-  drone.pose.orientation.x = pose.q[3];
-  drone.pose.orientation.y = pose.q[0];
-  drone.pose.orientation.z = pose.q[1];
-  drone.pose.orientation.w = pose.q[2];
-  drone.id = 0;
-  drone.lifetime = rclcpp::Duration(0);
-  drone.action = visualization_msgs::msg::Marker::ADD;
+// int WorldVisualizer::visualizeDrone(const px4_msgs::msg::VehicleOdometry& pose) const {
+//   auto drone = visualization_msgs::msg::Marker();
+//   drone.header.frame_id = "local_origin";
+//   drone.header.stamp = rclcpp::Clock().now();
+//   drone.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+//   drone.mesh_resource = "model://matrice_100/meshes/Matrice_100.dae";
+//   if (drone.mesh_resource.find("model://") != std::string::npos) {
+//     if (resolveUri(drone.mesh_resource)) {
+//       RCLCPP_ERROR(this->get_logger(), "RVIZ world loader could not find drone model");
+//       return 1;
+//     }
+//   }
+//   drone.mesh_use_embedded_materials = true;
+//   drone.scale.x = 1.5;
+//   drone.scale.y = 1.5;
+//   drone.scale.z = 1.5;
+//   //TODO: apply frame transforms?
+//   drone.pose.position.x = pose.position[0];
+//   drone.pose.position.y = pose.position[1];
+//   drone.pose.position.z = pose.position[2];
+//   drone.pose.orientation.x = pose.q[3];
+//   drone.pose.orientation.y = pose.q[0];
+//   drone.pose.orientation.z = pose.q[1];
+//   drone.pose.orientation.w = pose.q[2];
+//   drone.id = 0;
+//   drone.lifetime = rclcpp::Duration(0);
+//   drone.action = visualization_msgs::msg::Marker::ADD;
 
-  drone_pub_->publish(drone);
+//   drone_pub_->publish(drone);
 
-  return 0;
-}
+//   return 0;
+// }
 
 // extraction operators
 void operator>>(const YAML::Node& node, Eigen::Vector3f& v) {

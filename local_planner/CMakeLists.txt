@@ -6,16 +6,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(builtin_interfaces REQUIRED)
-find_package(perception_pcl REQUIRED)
 find_package(rclcpp REQUIRED)
 
 find_package(avoidance REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(px4_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
 
 find_package(PythonInterp REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
@@ -23,9 +16,6 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(yaml_cpp_vendor REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(PCL REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(visualization_msgs REQUIRED)
 
 if(DISABLE_SIMULATION)
   message(STATUS "Building avoidance without Gazebo Simulation")
@@ -61,7 +51,7 @@ set(LOCAL_PLANNER_CPP_FILES
 
 # Add local_planner lib
 add_library(local_planner SHARED "${LOCAL_PLANNER_CPP_FILES}")
-ament_target_dependencies(local_planner Eigen3 px4_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS})
+ament_target_dependencies(local_planner Eigen3 ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_include_directories(local_planner PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
@@ -78,20 +68,11 @@ add_executable(local_planner_node
 ## Specify libraries to link a library or executable target against
 target_link_libraries(local_planner_node local_planner)
 # Add node dependencies
-ament_target_dependencies(local_planner_node px4_msgs rclcpp avoidance pcl_ros)
+ament_target_dependencies(local_planner_node rclcpp avoidance pcl_ros)
 
 # Export information to downstream packages
 ament_export_dependencies(local_planner 
-  rclcpp 
-  eigen3_cmake_module 
-  px4_msgs 
-  geometry_msgs 
-  sensor_msgs
   pcl_ros
-  std_msgs
-  tf2
-  tf2_ros
-  visualization_msgs
 )
 
 ament_export_include_directories(include ${px4_msgs_INCLUDE_DIRS})

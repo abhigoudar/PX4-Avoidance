@@ -101,7 +101,7 @@ class LocalPlanner {
   float speed_ = 1.0f;
   float mission_item_speed_ = NAN;
 
-  ModelParameters px4_;  // PX4 Firmware paramters
+  // ModelParameters px4_;  // PX4 Firmware paramters
 
   sensor_msgs::msg::LaserScan distance_data_ = {};
   Eigen::Vector3f last_sent_waypoint_ = Eigen::Vector3f::Zero();

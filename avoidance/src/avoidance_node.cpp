@@ -19,7 +19,7 @@ AvoidanceNode::AvoidanceNode()
   // using this interface. So for now we limit the mission_item_speed_
   // to whatever the cruise speed is set.
   this->px4ParamsInit();
-  mission_item_speed_ = px4_.param_mpc_xy_cruise;
+  // mission_item_speed_ = px4_.param_mpc_xy_cruise;
 
   this->init();
 }
@@ -65,7 +65,7 @@ MAV_STATE AvoidanceNode::getSystemStatus() {
 
 void AvoidanceNode::publishSystemStatus() {
   // Publish companion process status as telemetry_status msg
-  auto status_msg = px4_msgs::msg::TelemetryStatus();
+  // auto status_msg = px4_msgs::msg::TelemetryStatus();
 
   // status_msg.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
   // status_msg.heartbeat_time = status_msg.timestamp;

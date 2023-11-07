@@ -28,7 +28,6 @@
 
   <depend>geometry_msgs</depend>
   <depend>perception_pcl</depend>
-  <depend>px4_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>stereo_image_proc</depend>

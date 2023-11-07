@@ -278,51 +278,51 @@ double getAngularVelocity(float desired_yaw, float curr_yaw) {
   return 0.5 * static_cast<double>(vel);
 }
 
-void transformToTrajectory(px4_msgs::msg::VehicleTrajectoryWaypoint& obst_avoid, geometry_msgs::msg::PoseStamped pose,
-                           geometry_msgs::msg::Twist vel) {
+// void transformToTrajectory(px4_msgs::msg::VehicleTrajectoryWaypoint& obst_avoid, geometry_msgs::msg::PoseStamped pose,
+//                            geometry_msgs::msg::Twist vel) {
 
-  obst_avoid.timestamp =  std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
+//   obst_avoid.timestamp =  std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
 
-  obst_avoid.waypoints[0].position[0] = pose.pose.position.x;
-  obst_avoid.waypoints[0].position[1] = pose.pose.position.y;
-  obst_avoid.waypoints[0].position[2] = pose.pose.position.z;
-  obst_avoid.waypoints[0].velocity[0] = vel.linear.x;
-  obst_avoid.waypoints[0].velocity[1] = vel.linear.y;
-  obst_avoid.waypoints[0].velocity[2] = vel.linear.z;
-  obst_avoid.waypoints[0].acceleration[0] = NAN;
-  obst_avoid.waypoints[0].acceleration[1] = NAN;
-  obst_avoid.waypoints[0].acceleration[2] = NAN;
-  obst_avoid.waypoints[0].yaw = tf2::getYaw(pose.pose.orientation);
-  obst_avoid.waypoints[0].yaw_speed = -vel.angular.z;
+//   obst_avoid.waypoints[0].position[0] = pose.pose.position.x;
+//   obst_avoid.waypoints[0].position[1] = pose.pose.position.y;
+//   obst_avoid.waypoints[0].position[2] = pose.pose.position.z;
+//   obst_avoid.waypoints[0].velocity[0] = vel.linear.x;
+//   obst_avoid.waypoints[0].velocity[1] = vel.linear.y;
+//   obst_avoid.waypoints[0].velocity[2] = vel.linear.z;
+//   obst_avoid.waypoints[0].acceleration[0] = NAN;
+//   obst_avoid.waypoints[0].acceleration[1] = NAN;
+//   obst_avoid.waypoints[0].acceleration[2] = NAN;
+//   obst_avoid.waypoints[0].yaw = tf2::getYaw(pose.pose.orientation);
+//   obst_avoid.waypoints[0].yaw_speed = -vel.angular.z;
 
-  obst_avoid.type = 0;  // MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS
+//   obst_avoid.type = 0;  // MAV_TRAJECTORY_REPRESENTATION::WAYPOINTS
 
-  obst_avoid.waypoints[0].point_valid = true;
+//   obst_avoid.waypoints[0].point_valid = true;
 
-  fillUnusedTrajectoryPoint(obst_avoid.waypoints[1]);
-  fillUnusedTrajectoryPoint(obst_avoid.waypoints[2]);
-  fillUnusedTrajectoryPoint(obst_avoid.waypoints[3]);
-  fillUnusedTrajectoryPoint(obst_avoid.waypoints[4]);
+//   fillUnusedTrajectoryPoint(obst_avoid.waypoints[1]);
+//   fillUnusedTrajectoryPoint(obst_avoid.waypoints[2]);
+//   fillUnusedTrajectoryPoint(obst_avoid.waypoints[3]);
+//   fillUnusedTrajectoryPoint(obst_avoid.waypoints[4]);
 
-  for (size_t i = 0; i < sizeof(obst_avoid.waypoints); i++) {
-    obst_avoid.waypoints[i].timestamp = obst_avoid.timestamp;
-    obst_avoid.waypoints[i].point_valid = false;
-  }
-}
+//   for (size_t i = 0; i < sizeof(obst_avoid.waypoints); i++) {
+//     obst_avoid.waypoints[i].timestamp = obst_avoid.timestamp;
+//     obst_avoid.waypoints[i].point_valid = false;
+//   }
+// }
 
-void fillUnusedTrajectoryPoint(px4_msgs::msg::TrajectoryWaypoint& point) {
-  point.position[0] = NAN;
-  point.position[1] = NAN;
-  point.position[2] = NAN;
-  point.velocity[0] = NAN;
-  point.velocity[1] = NAN;
-  point.velocity[2] = NAN;
-  point.acceleration[0] = NAN;
-  point.acceleration[1] = NAN;
-  point.acceleration[2] = NAN;
-  point.yaw = NAN;
-  point.yaw_speed = NAN;
-}
+// void fillUnusedTrajectoryPoint(px4_msgs::msg::TrajectoryWaypoint& point) {
+//   point.position[0] = NAN;
+//   point.position[1] = NAN;
+//   point.position[2] = NAN;
+//   point.velocity[0] = NAN;
+//   point.velocity[1] = NAN;
+//   point.velocity[2] = NAN;
+//   point.acceleration[0] = NAN;
+//   point.acceleration[1] = NAN;
+//   point.acceleration[2] = NAN;
+//   point.yaw = NAN;
+//   point.yaw_speed = NAN;
+// }
 
 // This function is a refactor of the original in the pcl library
 pcl::PointCloud<pcl::PointXYZ> removeNaNAndGetMaxima(pcl::PointCloud<pcl::PointXYZ>& cloud) {

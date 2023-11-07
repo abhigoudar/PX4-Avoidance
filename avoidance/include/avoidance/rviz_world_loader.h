@@ -13,7 +13,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <px4_msgs/msg/vehicle_odometry.hpp>
+// #include <px4_msgs/msg/vehicle_odometry.hpp>
 
 #include <sys/stat.h>
 
@@ -45,7 +45,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr loop_timer_;
 
-  rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr pose_sub_;
+  // rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr pose_sub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr world_pub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr drone_pub_;
 
@@ -63,7 +63,7 @@ public:
   /**
    * @brief      callback for subscribing mav pose topic
    **/
-  void positionCallback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg) const;
+  // void positionCallback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg) const;
 
   /**
    * @brief      parse the yaml file and publish world marker
@@ -75,7 +75,7 @@ public:
    * @brief      visualize the drone mesh at the current drone position
    * @param[in]  pose, current drone pose
    **/
-  int visualizeDrone(const px4_msgs::msg::VehicleOdometry& pose) const;
+  // int visualizeDrone(const px4_msgs::msg::VehicleOdometry& pose) const;
 };
 }
 

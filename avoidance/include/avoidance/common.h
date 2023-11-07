@@ -1,25 +1,26 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "avoidance/histogram.h"  // needed for ALPHA_RES
+#include <mutex>
+#include <chrono>
+#include <Eigen/Core>
+#include <Eigen/Dense>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <Eigen/Core>
-#include <Eigen/Dense>
 
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
-#include <px4_msgs/msg/vehicle_trajectory_bezier.hpp>
-#include <px4_msgs/msg/vehicle_trajectory_waypoint.hpp>
+
 #include <tf2/utils.h>
 #include <tf2_ros/transform_listener.h>
-#include <mutex>
-
-#include <chrono>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2/convert.h>
+
+#include "avoidance/histogram.h"  // needed for ALPHA_RES
+
 
 namespace avoidance {
 
@@ -46,11 +47,11 @@ enum class NavigationState {
   none,
 };
 
-enum class MavCommand {
-  MAV_CMD_NAV_LAND = 21,
-  MAV_CMD_NAV_TAKEOFF,
-  MAV_CMD_DO_CHANGE_SPEED = 178,
-};
+// enum class MavCommand {
+//   MAV_CMD_NAV_LAND = 21,
+//   MAV_CMD_NAV_TAKEOFF,
+//   MAV_CMD_DO_CHANGE_SPEED = 178,
+// };
 
 struct PolarPoint {
   PolarPoint(float e_, float z_, float r_) : e(e_), z(z_), r(r_){};
@@ -74,37 +75,37 @@ struct FOV {
   float v_fov_deg;
 };
 
-/**
-* @brief struct to contain the parameters needed for the model based trajectory
-*planning
-* when MPC_AUTO_MODE is set to 1 (default) then all members are used for the
-*jerk limited
-* trajectory on the flight controller side
-* when MPC_AUTO_MODE is set to 0, only up_accl, down_accl, xy_acc are used on
-*the
-* flight controller side
-**/
-struct ModelParameters {
-  // clang-format off
-  int param_mpc_auto_mode = -1; // Auto sub-mode - 0: default line tracking, 1 jerk-limited trajectory
-  float param_mpc_jerk_min = NAN; // Velocity-based minimum jerk limit
-  float param_mpc_jerk_max = NAN; // Velocity-based maximum jerk limit
-  float param_acc_up_max = NAN;   // Maximum vertical acceleration in velocity controlled modes upward
-  float param_mpc_z_vel_max_up = NAN;   // Maximum vertical ascent velocity
-  float param_mpc_acc_down_max = NAN; // Maximum vertical acceleration in velocity controlled modes down
-  float param_mpc_acc_hor = NAN;  // Maximum horizontal acceleration for auto mode and
-                      // maximum deceleration for manual mode
-  float param_mpc_xy_cruise = NAN;   // Desired horizontal velocity in mission
-  float param_mpc_tko_speed = NAN; // Takeoff climb rate
-  float param_mpc_land_speed = NAN;   // Landing descend rate
+// /**
+// * @brief struct to contain the parameters needed for the model based trajectory
+// *planning
+// * when MPC_AUTO_MODE is set to 1 (default) then all members are used for the
+// *jerk limited
+// * trajectory on the flight controller side
+// * when MPC_AUTO_MODE is set to 0, only up_accl, down_accl, xy_acc are used on
+// *the
+// * flight controller side
+// **/
+// struct ModelParameters {
+//   // clang-format off
+//   int param_mpc_auto_mode = -1; // Auto sub-mode - 0: default line tracking, 1 jerk-limited trajectory
+//   float param_mpc_jerk_min = NAN; // Velocity-based minimum jerk limit
+//   float param_mpc_jerk_max = NAN; // Velocity-based maximum jerk limit
+//   float param_acc_up_max = NAN;   // Maximum vertical acceleration in velocity controlled modes upward
+//   float param_mpc_z_vel_max_up = NAN;   // Maximum vertical ascent velocity
+//   float param_mpc_acc_down_max = NAN; // Maximum vertical acceleration in velocity controlled modes down
+//   float param_mpc_acc_hor = NAN;  // Maximum horizontal acceleration for auto mode and
+//                       // maximum deceleration for manual mode
+//   float param_mpc_xy_cruise = NAN;   // Desired horizontal velocity in mission
+//   float param_mpc_tko_speed = NAN; // Takeoff climb rate
+//   float param_mpc_land_speed = NAN;   // Landing descend rate
 
-  float param_nav_acc_rad = NAN;
+//   float param_nav_acc_rad = NAN;
 
-  // TODO: add estimator limitations for max speed and height
+//   // TODO: add estimator limitations for max speed and height
 
-  float param_cp_dist = NAN; // Collision Prevention distance to keep from obstacle. -1 for disabled
-  // clang-format on
-};
+//   float param_cp_dist = NAN; // Collision Prevention distance to keep from obstacle. -1 for disabled
+//   // clang-format on
+// };
 
 #define M_PI_F 3.14159265358979323846f
 #define WARN_UNUSED __attribute__((warn_unused_result))
@@ -323,20 +324,20 @@ float angleDifference(float a, float b);
 **/
 double getAngularVelocity(float desired_yaw, float curr_yaw);
 
-/**
-* @brief     transforms setpoints from ROS message to vehicle_trajectory_waypoint uORB
-* @params[out] obst_avoid, setpoint as a vehicle_trajectory_waypoint
-* @params[in] pose, position and attitude setpoint computed by the planner
-* @params[in] vel, velocity setpoint computed by the planner
-**/
-void transformToTrajectory(px4_msgs::msg::VehicleTrajectoryWaypoint& obst_avoid, geometry_msgs::msg::PoseStamped pose,
-                           geometry_msgs::msg::Twist vel);
+// /**
+// * @brief     transforms setpoints from ROS message to vehicle_trajectory_waypoint uORB
+// * @params[out] obst_avoid, setpoint as a vehicle_trajectory_waypoint
+// * @params[in] pose, position and attitude setpoint computed by the planner
+// * @params[in] vel, velocity setpoint computed by the planner
+// **/
+// void transformToTrajectory(px4_msgs::msg::VehicleTrajectoryWaypoint& obst_avoid, geometry_msgs::msg::PoseStamped pose,
+//                            geometry_msgs::msg::Twist vel);
 
-/**
-* @brief      fills MavROS trajectory messages with NAN
-* @param      point, setpoint to be filled with NAN
-**/
-void fillUnusedTrajectoryPoint(px4_msgs::msg::TrajectoryWaypoint& point);
+// /**
+// * @brief      fills MavROS trajectory messages with NAN
+// * @param      point, setpoint to be filled with NAN
+// **/
+// void fillUnusedTrajectoryPoint(px4_msgs::msg::TrajectoryWaypoint& point);
 
 /**
 * @brief           This is a refactored version of the PCL library function
